@@ -15,7 +15,7 @@
  *  revised versions of this work",
  *
  *
-  fileop [-f X ]|[-l # -u #] [-s Y] [-e] [-b] [-w] [-d <dir>] [-t] [-v] [-h]
+  fileop [-f X ]|[-l # -u #] [-s Y] [-e] [-b] [-w] [-d <dir>] [-L] [-t] [-v] [-h]
        -f #      Force factor. X^3 files will be created and removed.
        -l #      Lower limit on the value of the Force factor.
        -u #      Upper limit on the value of the Force factor.
@@ -25,6 +25,7 @@
        -w        Output worst case.
        -d <dir>  Specify starting directory.
        -U <dir>  Mount point to remount between tests.
+       -L        Loop the test.
        -t        Verbose output option.
        -v        Version information.
        -h        Help text.
@@ -54,6 +55,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <signal.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -175,12 +177,13 @@ void purge_buffer_cache()
 
 int main(int argc, char **argv)
 {
+	bool loop = false;
 	if(argc == 1)
 	{
 		usage();
 		exit(1);
 	}
-	while((cret = getopt(argc,argv,"hbwetvf:s:l:u:d:U:i: ")) != EOF){
+	while((cret = getopt(argc,argv,"hbweLtvf:s:l:u:d:U:i: ")) != EOF){
 		switch(cret){
                 case 'h':
                         usage();
@@ -196,9 +199,12 @@ int main(int argc, char **argv)
 		case 'U':
 			mountname = optarg;
 			break;
+		case 'L':
+			loop = true;
+			break;
 		case 'i':	/* Increment force by */
 			incr=atoi(optarg);
-			if(incr < 0)
+			if(incr <= 0)
 				incr=1;
 			break;
 		case 'f':	/* Force factor */
@@ -272,6 +278,8 @@ int main(int argc, char **argv)
 		x=1;
 	if(range==0)
 		lower=upper=x;
+	if(loop)
+		incr=0;
 	for(i=lower;i<=upper;i+=incr)
 	{
 		clear_stats();
@@ -1330,7 +1338,7 @@ void
 usage(void)
 {
   splash();
-  printf("     fileop [-f X ]|[-l # -u #] [-s Y] [-e] [-b] [-w] [-d <dir>] [-t] [-v] [-h]\n");
+  printf("     fileop [-f X ]|[-l # -u #] [-s Y] [-e] [-b] [-w] [-d <dir>] [-L] [-t] [-v] [-h]\n");
   printf("\n");
   printf("     -f #      Force factor. X^3 files will be created and removed.\n");
   printf("     -l #      Lower limit on the value of the Force factor.\n");
@@ -1342,6 +1350,7 @@ usage(void)
   printf("     -w        Output worst case results.\n");
   printf("     -d <dir>  Specify starting directory.\n");
   printf("     -U <dir>  Mount point to remount between tests.\n");
+  printf("     -L        Loop the test.\n");
   printf("     -t        Verbose output option.\n");
   printf("     -v        Version information.\n");
   printf("     -h        Help text.\n");
